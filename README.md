@@ -1,7 +1,7 @@
 # Wishes Application
 An Android application for recording ideas, desires, wishes and thoughts.
 
-##Description 
+## Description 
 With this app, you can record everything you want to try, places you want to visit, and things you want to do - capturing both your long-term dreams and spontaneous ideas.  
 To start, create a category of wishes and add your desires into it.
 
