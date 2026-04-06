@@ -15,7 +15,7 @@ To start, create a category of wishes and add your desires into it.
   - Delete desire
   - Rename the desire
   - Mark a desire as completed or not completed
-Data is saved between sessions.
+- **Data is saved between sessions**
 
 ## How to run
 1. Clone the repository
