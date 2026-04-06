@@ -2,6 +2,12 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 package com.example.myapplication
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,6 +78,8 @@ fun IdeasScreen() {
     var renameCategoryTarget by remember { mutableStateOf<Category?>(null) }//категория для переименования
     var renameIdeaTarget by remember { mutableStateOf<Idea?>(null) }//идея для переименования
     var renameText by remember { mutableStateOf("") }//текст переименования категории/идеи
+
+    var isDataLoaded by remember { mutableStateOf(false) }//флаг загрузки
 
     //загрузка категорий
     LaunchedEffect(Unit) {
@@ -136,7 +145,9 @@ fun IdeasScreen() {
                     )
                 )
             )
+
         }
+        isDataLoaded = true
     }
 
     //сохранение категорий в DataStore
@@ -152,6 +163,52 @@ fun IdeasScreen() {
     }
 
     val scrollState = rememberScrollState()//состояние скролла для экрана
+    if (!isDataLoaded) return //ожидание загрузки данных перед показом UI
+
+    //окно первого запуска
+    if (showFirstLaunchDialog) {
+        var alpha by remember { mutableStateOf(0f) }
+
+        //плавная анимация появления
+        LaunchedEffect(Unit) {
+            androidx.compose.animation.core.animate(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1500)
+            ) { value, _ ->
+                alpha = value
+            }
+        }
+
+        Dialog(onDismissRequest = { showFirstLaunchDialog = false }) {
+            Box(
+                modifier = Modifier
+                    .graphicsLayer { this.alpha = alpha }
+                    .background(Color.White, shape = RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Text(
+                        "Текущие категории с желаниями — примеры. Чтобы удалить или " +
+                                "переименовать их используйте долгое нажатие.",
+                        fontFamily = DelaGothicOneFont
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { showFirstLaunchDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGreen),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            "Понятно",
+                            color = MainBlue,
+                            fontFamily = DelaGothicOneFont
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     Column(modifier = Modifier.padding(16.dp).verticalScroll(scrollState)) {
         //заголовок
@@ -165,32 +222,6 @@ fun IdeasScreen() {
                 .padding(vertical = 16.dp),
             textAlign = TextAlign.Center
         )
-
-        //окно первого запуска
-        if (showFirstLaunchDialog) {
-            AlertDialog(
-                onDismissRequest = { showFirstLaunchDialog = false },
-                text = {
-                    Text(
-                        "Текущие категории с желаниями — примеры. Чтобы удалить или " +
-                                "переименовать их используйте долгое нажатие.",
-                        fontFamily = DelaGothicOneFont
-                    )
-                },
-                confirmButton = {
-                    Button(
-                        onClick = { showFirstLaunchDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGreen)
-                    ) {
-                        Text(
-                            "Понятно",
-                            color = MainBlue,
-                            fontFamily = DelaGothicOneFont
-                        )
-                    }
-                }
-            )
-        }
 
         categories.forEach { category ->
             //отображение категории с действиями
@@ -336,6 +367,42 @@ fun IdeasScreen() {
             onDismiss = { renameIdeaTarget = null },
             confirmButtonText = "Сохранить"
         )
+    }
+}
+
+@Composable
+fun LoadingDots() {
+    val dotCount = 3
+    val delayUnit = 300
+
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val animatedValues = List(dotCount) { index ->
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = delayUnit * dotCount),
+                repeatMode = RepeatMode.Restart,
+                initialStartOffset = StartOffset(delayUnit * index)
+            )
+        )
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        animatedValues.forEach { value ->
+            val alpha = if (value.value > 0.5f) 1f else 0.2f
+
+            Text(
+                ".",
+                fontSize = 40.sp,
+                color = MainBlue.copy(alpha = alpha),
+                fontFamily = DelaGothicOneFont
+            )
+        }
     }
 }
 
