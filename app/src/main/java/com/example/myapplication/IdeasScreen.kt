@@ -151,7 +151,9 @@ fun IdeasScreen() {
         }
     }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    val scrollState = rememberScrollState()//состояние скролла для экрана
+
+    Column(modifier = Modifier.padding(16.dp).verticalScroll(scrollState)) {
         //заголовок
         Text(
             "Мои желания",
